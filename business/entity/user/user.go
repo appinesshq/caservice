@@ -1,11 +1,11 @@
-// package entity contains the user entity with all business logic related to this entity.
+// package user contains the user entity with all business logic related to this entity.
 package user
 
 import (
 	"fmt"
 	"time"
 
-	"github.com/appinesshq/service/foundation/validation"
+	"github.com/appinesshq/caservice/foundation/validation"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -13,6 +13,7 @@ import (
 // User is an entity that contains user data and business logic.
 type User struct {
 	ID       string    `validate:"required,uuid"`
+	Name     string    `validate:"required"`
 	Email    string    `validate:"required,email"`
 	Password string    `validate:"required"`
 	Roles    []string  `validate:"required"`
@@ -22,10 +23,10 @@ type User struct {
 
 // New returns an initialized and validated User entity with a generated ID and encrypted password
 // or returns an error if password generation or validation fails.
-func New(email, password string, roles []string, now time.Time) (*User, error) {
-	// Create the User struct
-	u := User{
+func New(name, email, password string, roles []string, now time.Time) (*User, error) {
+	user := User{
 		ID:       uuid.NewString(),
+		Name:     name,
 		Password: password,
 		Email:    email,
 		Roles:    roles,
@@ -33,17 +34,19 @@ func New(email, password string, roles []string, now time.Time) (*User, error) {
 		Modified: now,
 	}
 
-	// Validate the User
-	if err := u.Validate(); err != nil {
+	// Validation takes place before encryption of the password to
+	// ensure the password is valid. An encrypted invalid password
+	// would always pass. We don't want that.
+	if err := user.Validate(); err != nil {
 		return nil, fmt.Errorf("validation failed: %w", err)
 	}
 
 	// Encrypt the password
-	if err := u.EncryptPassword(); err != nil {
+	if err := user.EncryptPassword(); err != nil {
 		return nil, fmt.Errorf("encrypting password: %w", err)
 	}
 
-	return &u, nil
+	return &user, nil
 }
 
 // Validate implements the Validator interface. Returns an error if validation fails.
@@ -67,17 +70,15 @@ func (u *User) CheckPassword(password string) error {
 
 // EncryptPassword will encrypt User.Password.
 func (u *User) EncryptPassword() error {
-	// Reject empty passwords.
 	if u.Password == "" {
 		return fmt.Errorf("empty password")
 	}
 
-	// Encrypt the password and set it.
-	b, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return err
 	}
-	u.Password = fmt.Sprintf("%s", b)
+	u.Password = fmt.Sprintf("%s", hash)
 
 	return nil
 }
