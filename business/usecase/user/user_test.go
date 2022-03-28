@@ -38,7 +38,7 @@ func TestUserUseCase(t *testing.T) {
 func testRegisterUserWithInvalidEmailFails(t *testing.T) {
 	uc := user.UseCase{Repo: nil}
 
-	_, err := uc.Register("Test User", "notanemail", "testpassword", []string{"ADMIN"})
+	_, err := uc.Register("Test User", "notanemail", "testpassword", []entity.Role{entity.RoleAdmin, entity.RoleAdmin})
 	if err == nil {
 		t.Fatalf("\t%s\tShould not be able to create new user with wrong email: %v.", tests.Failed, err)
 	}
@@ -66,7 +66,7 @@ func testRegisterValidUserSucceeds(t *testing.T) {
 		Create(gomock.Any()).
 		Return(nil)
 
-	o, err := uc.Register("Test User", "my@email.com", "testpassword", []string{"ADMIN"})
+	o, err := uc.Register("Test User", "my@email.com", "testpassword", []entity.Role{entity.RoleAdmin, entity.RoleAdmin})
 	if err != nil {
 		t.Fatalf("\t%s\tShould be able to create new user with valid details: %v.", tests.Failed, err)
 	}
@@ -124,7 +124,7 @@ func testAuthenticationWithInvalidCredentialsFails(t *testing.T) {
 			Name:     "Test User",
 			Email:    "my@email.com",
 			Password: "$2a$10$1ggfMVZV6Js0ybvJufLRUOWHS5f6KneuP0XwwHpJ8L8ipdry9f2/a",
-			Roles:    []string{"ADMIN", "USER"},
+			Roles:    []entity.Role{entity.RoleUser, entity.RoleAdmin},
 			Created:  now,
 			Modified: now,
 		}, nil)
@@ -154,7 +154,7 @@ func testAuthenticationWithValidCredentialsSucceeds(t *testing.T) {
 			Name:     "Test User",
 			Email:    "my@email.com",
 			Password: "$2a$10$1ggfMVZV6Js0ybvJufLRUOWHS5f6KneuP0XwwHpJ8L8ipdry9f2/a",
-			Roles:    []string{"ADMIN", "USER"},
+			Roles:    []entity.Role{entity.RoleUser, entity.RoleAdmin},
 			Created:  now,
 			Modified: now,
 		}, nil)

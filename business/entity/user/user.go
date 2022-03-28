@@ -1,4 +1,4 @@
-// package user contains the user entity with all business logic related to this entity.
+// Package user contains the user entity with all business logic related to this entity.
 package user
 
 import (
@@ -10,20 +10,27 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
+type Role int
+
+const (
+	RoleAdmin = iota
+	RoleUser
+)
+
 // User is an entity that contains user data and business logic.
 type User struct {
 	ID       string    `validate:"required,uuid"`
 	Name     string    `validate:"required"`
 	Email    string    `validate:"required,email"`
 	Password string    `validate:"required"`
-	Roles    []string  `validate:"required"`
+	Roles    []Role    `validate:"required"`
 	Created  time.Time `validate:"required"`
 	Modified time.Time `validate:"required"`
 }
 
 // New returns an initialized and validated User entity with a generated ID and encrypted password
 // or returns an error if password generation or validation fails.
-func New(name, email, password string, roles []string, now time.Time) (*User, error) {
+func New(name, email, password string, roles []Role, now time.Time) (*User, error) {
 	user := User{
 		ID:       uuid.NewString(),
 		Name:     name,

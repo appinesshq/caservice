@@ -18,15 +18,15 @@ func TestUserEntity(t *testing.T) {
 		testID := 0
 		t.Logf("\tTest %d:\tWhen handling a single User.", testID)
 		{
-			t.Run("invalidEmail", testNewUserWithInvalidEmailFails)
-			t.Run("invalidPassword", testNewUserWithInvalidPasswordFails)
-			t.Run("newUser", testNewUserSucceeds)
+			t.Run("newUserWithInvalidEmailFails", testNewUserWithInvalidEmailFails)
+			t.Run("newUserWithInvalidPasswordFails", testNewUserWithInvalidPasswordFails)
+			t.Run("newUserSucceeds", testNewUserSucceeds)
 		}
 	}
 }
 
 func testNewUserWithInvalidEmailFails(t *testing.T) {
-	_, err := user.New("Test User", "notanemail", "testpassword", []string{"ADMIN"}, now)
+	_, err := user.New("Test User", "notanemail", "testpassword", []user.Role{user.RoleUser, user.RoleAdmin}, now)
 	if err == nil {
 		t.Fatalf("\t%s\tShould not be able to create new user with wrong email: %v.", tests.Failed, err)
 	}
@@ -45,7 +45,7 @@ func testNewUserWithInvalidEmailFails(t *testing.T) {
 }
 
 func testNewUserWithInvalidPasswordFails(t *testing.T) {
-	_, err := user.New("Test User", "my@email.com", "", []string{"ADMIN"}, now)
+	_, err := user.New("Test User", "my@email.com", "", []user.Role{user.RoleUser}, now)
 	if !validation.IsValidationErrors(err) {
 		t.Fatalf("\t%s\tShould not be able to create new user without a password: %v.", tests.Failed, err)
 	}
@@ -59,7 +59,7 @@ func testNewUserWithInvalidPasswordFails(t *testing.T) {
 }
 
 func testNewUserSucceeds(t *testing.T) {
-	o, err := user.New("Test User", "my@email.com", "testpassword", []string{"ADMIN"}, now)
+	o, err := user.New("Test User", "my@email.com", "testpassword", []user.Role{user.RoleUser, user.RoleAdmin}, now)
 	if err != nil {
 		t.Fatalf("\t%s\tShould be able to create new user with valid details: %v.", tests.Failed, err)
 	}

@@ -30,7 +30,7 @@ type Repository interface {
 	Writer
 }
 
-type Actions interface {
-	Register(string, string, string, []string) (*entity.User, error)
+type Service interface {
 	Authenticate(string, string) (string, error)
+	Register(string, string, string, []string) (*entity.User, error)
 }

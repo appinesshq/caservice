@@ -21,7 +21,7 @@ func New(r Repository) *UseCase {
 }
 
 // Register instantiates a new User entity and saves it at the repository.
-func (uc *UseCase) Register(name string, email string, password string, roles []string) (*entity.User, error) {
+func (uc *UseCase) Register(name string, email string, password string, roles []entity.Role) (*entity.User, error) {
 	user, err := entity.New(name, email, password, roles, time.Now())
 	if err != nil {
 		return nil, fmt.Errorf("creating user entity: %w", err)
