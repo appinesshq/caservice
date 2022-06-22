@@ -49,4 +49,4 @@ _testmain.go
 # Folders
 _obj
 _test
-tmp
+.tmp
