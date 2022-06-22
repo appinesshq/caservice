@@ -6,41 +6,43 @@ import (
 	"time"
 
 	"github.com/appinesshq/caservice/business/user"
+	"go.uber.org/zap"
 )
 
 var (
-	AuthorizationErr  = errors.New("unauthorized")
-	AuthenticationErr = errors.New("authentication error")
+	ErrUnauthorized         = errors.New("unauthorized")
+	ErrAuthenticationFailed = errors.New("authentication failed")
 )
 
 // Config is used to configure UserUseCases.
 type Config struct {
-	SessionExpires time.Duration
 }
 
 // UserUseCases contain application logic for user entities.
 type UserUseCases struct {
-	Cfg  Config
-	Repo UserRepository
+	Log             *zap.SugaredLogger
+	Repo            UserRepository
+	SessionDuration time.Duration
 }
 
 // New returns an initialized UserUseCases.
-func New(cfg Config, r UserRepository) UserUseCases {
-	return UserUseCases{Cfg: cfg, Repo: r}
+// Requires a logger, user repository and user session duration as input.
+func New(log *zap.SugaredLogger, r UserRepository, s time.Duration) UserUseCases {
+	return UserUseCases{Log: log, Repo: r, SessionDuration: s}
 }
 
 // Authenticate returns a Session after succesfully authenticating a user by email and password.
-func (uc UserUseCases) Authenticate(ctx context.Context, email, password string) (user.Session, error) {
+func (uc UserUseCases) Authenticate(ctx context.Context, email, password string, now time.Time) (user.Session, error) {
 	u, err := uc.Repo.QueryByEmail(email)
 	if err != nil {
-		return user.Session{}, AuthenticationErr
+		return user.Session{}, ErrAuthenticationFailed
 	}
 
 	if !u.HasPassword(password) {
-		return user.Session{}, AuthenticationErr
+		return user.Session{}, ErrAuthenticationFailed
 	}
 
-	return user.NewSession(u, time.Now().Add(uc.Cfg.SessionExpires)), nil
+	return user.NewSession(u, now.Add(uc.SessionDuration)), nil
 }
 
 // Create inserts the provided user at the repository.
@@ -52,7 +54,7 @@ func (uc UserUseCases) Create(ctx context.Context, u user.User) error {
 
 	// Only ADMIN can do this action.
 	if !s.UserHasRole(user.RoleAdmin) {
-		return AuthorizationErr
+		return ErrAuthenticationFailed
 	}
 
 	return uc.Repo.Create(u)
@@ -67,7 +69,7 @@ func (uc UserUseCases) Query(ctx context.Context) ([]user.User, error) {
 
 	// Only ADMIN can do this action.
 	if !s.UserHasRole(user.RoleAdmin) {
-		return []user.User{}, AuthorizationErr
+		return []user.User{}, ErrUnauthorized
 	}
 
 	return uc.Repo.Query()
@@ -82,7 +84,7 @@ func (uc UserUseCases) QueryByID(ctx context.Context, id string) (user.User, err
 
 	// Only ADMIN or owner can do this action.
 	if !s.UserHasRole(user.RoleAdmin) || s.User.ID != id {
-		return user.User{}, AuthorizationErr
+		return user.User{}, ErrUnauthorized
 	}
 
 	return uc.Repo.QueryByID(id)
@@ -97,7 +99,7 @@ func (uc UserUseCases) QueryByEmail(ctx context.Context, email string) (user.Use
 
 	// Only ADMIN or owner can do this action.
 	if !s.UserHasRole(user.RoleAdmin) || s.User.Email != email {
-		return user.User{}, AuthorizationErr
+		return user.User{}, ErrUnauthorized
 	}
 
 	return uc.Repo.QueryByEmail(email)
@@ -112,7 +114,7 @@ func (uc UserUseCases) Update(ctx context.Context, u user.User) error {
 
 	// Only ADMIN or owner can do this action.
 	if !s.UserHasRole(user.RoleAdmin) || s.User.ID != u.ID {
-		return AuthorizationErr
+		return ErrUnauthorized
 	}
 
 	return uc.Repo.Update(u)
@@ -127,7 +129,7 @@ func (uc UserUseCases) Delete(ctx context.Context, id string) error {
 
 	// Only ADMIN or owner can do this action.
 	if !s.UserHasRole(user.RoleAdmin) || s.User.ID != id {
-		return AuthorizationErr
+		return ErrUnauthorized
 	}
 
 	return uc.Repo.Delete(id)

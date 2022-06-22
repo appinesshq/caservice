@@ -22,7 +22,7 @@ type Values struct {
 
 // GetValues returns the Values from the context.
 // Returns an error is there's no or an invalid Values in the context.
-func GetSession(ctx context.Context) (*Values, error) {
+func GetValues(ctx context.Context) (*Values, error) {
 	v, ok := ctx.Value(key).(*Values)
 	if !ok {
 		return nil, fmt.Errorf("values missing from context")
