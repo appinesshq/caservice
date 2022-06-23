@@ -8,6 +8,7 @@ import (
 
 	"github.com/appinesshq/caservice/app/services/sales-api/handlers/v1/usergrp"
 	"github.com/appinesshq/caservice/app/services/sales-api/web/auth"
+	"github.com/appinesshq/caservice/data"
 
 	// "github.com/appinesshq/caservice/app/services/sales-api/web/v1/mid"
 	user "github.com/appinesshq/caservice/business/user/usecases"
@@ -19,7 +20,7 @@ import (
 type Config struct {
 	Log                 *zap.SugaredLogger
 	Auth                *auth.Auth
-	UserRepo            user.UserRepository
+	DataSources         *data.DataSources
 	UserSessionDuration time.Duration
 }
 
@@ -32,7 +33,7 @@ func Routes(app *web.App, cfg Config) {
 
 	// Register user management and authentication endpoints.
 	ugh := usergrp.Handlers{
-		User: user.New(cfg.Log, cfg.UserRepo, cfg.UserSessionDuration),
+		User: user.New(cfg.Log, cfg.DataSources.UserRepo, cfg.UserSessionDuration),
 		Auth: cfg.Auth,
 	}
 	app.Handle(http.MethodGet, version, "/users/token", ugh.Token)

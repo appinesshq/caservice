@@ -14,6 +14,7 @@ import (
 
 	"github.com/appinesshq/caservice/app/services/sales-api/handlers"
 	"github.com/appinesshq/caservice/app/services/sales-api/web/auth"
+	"github.com/appinesshq/caservice/data"
 	"github.com/appinesshq/caservice/data/user/mem"
 	"github.com/appinesshq/caservice/foundation/keystore"
 	"github.com/appinesshq/caservice/foundation/logger"
@@ -141,8 +142,8 @@ func run(log *zap.SugaredLogger) error {
 	// =========================================================================
 	// Initialize storage
 
-	log.Infow("startup", "status", "initializing memory storage")
-	s := mem.New()
+	log.Infow("startup", "status", "initializing data sources")
+	s := data.DataSources{UserRepo: mem.New()}
 
 	// =========================================================================
 	// TODO: Initialize Tracing
@@ -165,7 +166,7 @@ func run(log *zap.SugaredLogger) error {
 		Shutdown:            shutdown,
 		Log:                 log,
 		Auth:                auth,
-		UserRepo:            s,
+		DataSources:         &s,
 		UserSessionDuration: cfg.Auth.UserSessionDuration,
 	})
 

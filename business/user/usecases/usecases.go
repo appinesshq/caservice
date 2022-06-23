@@ -1,3 +1,4 @@
+// Package usecases provides user usecases with application logic.
 package usecases
 
 import (

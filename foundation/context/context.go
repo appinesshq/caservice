@@ -1,3 +1,4 @@
+// Package context provides functionality for wrapping values into the context.
 package context
 
 import (
@@ -50,7 +51,7 @@ func SetStatusCode(ctx context.Context, statusCode int) error {
 	return nil
 }
 
-// ContextWithSession returns a new context with the provided values encapsulated.
+// ContextWithValues returns a new context with the provided values encapsulated.
 func ContextWithValues(ctx context.Context, v *Values) context.Context {
 	return context.WithValue(ctx, key, v)
 }

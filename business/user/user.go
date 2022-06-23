@@ -1,3 +1,4 @@
+// Package user provides user (related) entities and business logic.
 package user
 
 import (

@@ -13,7 +13,7 @@ import (
 	v1 "github.com/appinesshq/caservice/app/services/sales-api/handlers/v1"
 	"github.com/appinesshq/caservice/app/services/sales-api/web/auth"
 	"github.com/appinesshq/caservice/app/services/sales-api/web/v1/mid"
-	user "github.com/appinesshq/caservice/business/user/usecases"
+	"github.com/appinesshq/caservice/data"
 	"github.com/appinesshq/caservice/foundation/web"
 
 	"go.uber.org/zap"
@@ -36,7 +36,7 @@ type APIMuxConfig struct {
 	Shutdown            chan os.Signal
 	Log                 *zap.SugaredLogger
 	Auth                *auth.Auth
-	UserRepo            user.UserRepository
+	DataSources         *data.DataSources
 	UserSessionDuration time.Duration
 }
 
@@ -84,7 +84,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 	v1.Routes(app, v1.Config{
 		Log:                 cfg.Log,
 		Auth:                cfg.Auth,
-		UserRepo:            cfg.UserRepo,
+		DataSources:         cfg.DataSources,
 		UserSessionDuration: cfg.UserSessionDuration,
 	})
 

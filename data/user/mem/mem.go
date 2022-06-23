@@ -1,9 +1,9 @@
+// Package mem provides memory storage functionality.
 package mem
 
 import (
 	"errors"
 	"sync"
-	"time"
 
 	"github.com/appinesshq/caservice/business/user"
 	"github.com/appinesshq/caservice/business/user/usecases"
@@ -16,10 +16,7 @@ type MemStorage struct {
 }
 
 func New() *MemStorage {
-	s := MemStorage{users: make(map[string]user.User), indexes: make(map[string]string)}
-	u, _ := user.NewWithID("Test User", "admin@example.com", "gophers", []string{user.RoleAdmin, user.RoleUser}, time.Now().UTC())
-	s.Create(u)
-	return &s
+	return &MemStorage{users: make(map[string]user.User), indexes: make(map[string]string)}
 }
 
 func (m *MemStorage) hasID(id string) bool {

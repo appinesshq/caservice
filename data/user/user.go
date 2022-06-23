@@ -1,9 +1,10 @@
+// Package user provides user storage functionality.
 package user
 
 import "github.com/appinesshq/caservice/business/user"
 
-// Storage is an interface to be implemented by user storage mechanisms.
-type Storage interface {
+// UserStorage is an interface to be implemented by user storage mechanisms.
+type UserStorage interface {
 	Create(user.User) error
 	Query() ([]user.User, error)
 	QueryByID(string) (user.User, error)

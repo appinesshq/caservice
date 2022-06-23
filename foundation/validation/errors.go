@@ -19,7 +19,7 @@ func IsValidationError(e error) bool {
 	return errors.As(e, &ve)
 }
 
-// Validation error is a validation error for a single field.
+// FieldValidationError is a validation error for a single field.
 type FieldValidationError struct {
 	Field string
 	Err   string
@@ -69,7 +69,7 @@ func IsFieldValidationError(err error) bool {
 
 // IsAnyValidationError returns true if the provided error is
 // a ValidationsErrors or ValidationError.
-func isAnyValidationError(err error) bool {
+func IsAnyValidationError(err error) bool {
 	return IsValidationErrors(err) || IsFieldValidationError(err) || IsValidationError(err)
 }
 

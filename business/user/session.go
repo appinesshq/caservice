@@ -15,7 +15,7 @@ func NewSession(u User, expires time.Time) Session {
 	return Session{User: u, Expires: expires}
 }
 
-// Authorized returns true if the session's user has one of the
+// UserHasRole returns true if the session's user has one of the
 // provided roles.
 func (s Session) UserHasRole(roles ...string) bool {
 	for _, has := range s.User.Roles {
