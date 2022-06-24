@@ -38,12 +38,10 @@ func (m *MemStorage) hasEmail(email string) bool {
 func (m *MemStorage) Create(u user.User) error {
 	// Return an error if the ID or Email already exist.
 	if m.hasID(u.ID) {
-		err := usecases.FieldNotUniqueError("id")
-		return &err
+		return usecases.ErrUniqueID
 	}
 	if m.hasEmail(u.Email) {
-		err := usecases.FieldNotUniqueError("email")
-		return &err
+		return usecases.ErrUniqueEmail
 	}
 
 	m.mu.Lock()

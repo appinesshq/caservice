@@ -47,18 +47,56 @@ func (uc UserUseCases) Authenticate(ctx context.Context, email, password string,
 }
 
 // Create inserts the provided user at the repository.
-func (uc UserUseCases) Create(ctx context.Context, u user.User) error {
+func (uc UserUseCases) Create(ctx context.Context, n NewUser, now time.Time) (user.User, error) {
 	s, err := user.GetSession(ctx)
 	if err != nil {
-		return err
+		return user.User{}, err
 	}
 
 	// Only ADMIN can do this action.
 	if !s.UserHasRole(user.RoleAdmin) {
-		return ErrAuthenticationFailed
+		return user.User{}, ErrAuthenticationFailed
 	}
 
-	return uc.Repo.Create(u)
+	u, err := user.NewWithID(n.Name, n.Email, n.Password, n.Roles, now)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	if err := uc.Repo.Create(u); err != nil {
+		return user.User{}, err
+	}
+
+	return u, nil
+}
+
+// Register inserts the provided user at the repository.
+// If there are no users yet, the user will get the ADMIN and USER role,
+// in any other case the user will get only the USER role.
+//
+// Unlike Create, Register requires no admin priviliges. It is meant
+// to register the first admin of the system and user signups.
+func (uc UserUseCases) Register(ctx context.Context, n NewUser, now time.Time) (user.User, error) {
+	users, err := uc.Repo.Query()
+	if err != nil {
+		return user.User{}, err
+	}
+	if len(users) == 0 {
+		n.Roles = []string{user.RoleAdmin, user.RoleUser}
+	} else {
+		n.Roles = []string{user.RoleUser}
+	}
+
+	u, err := user.NewWithID(n.Name, n.Email, n.Password, n.Roles, now)
+	if err != nil {
+		return user.User{}, err
+	}
+
+	if err := uc.Repo.Create(u); err != nil {
+		return user.User{}, err
+	}
+
+	return u, nil
 }
 
 // Query retrieves all users from the repository,

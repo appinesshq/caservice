@@ -67,3 +67,49 @@ func (h Handlers) Token(ctx context.Context, w http.ResponseWriter, r *http.Requ
 
 	return web.Respond(ctx, w, tkn, http.StatusOK)
 }
+
+// Register adds a new user to the system.
+func (h Handlers) Register(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := fctx.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	var nu user.NewUser
+	if err := web.Decode(r, &nu); err != nil {
+		return fmt.Errorf("unable to decode payload: %w", err)
+	}
+
+	usr, err := h.User.Register(ctx, nu, v.Now)
+	if err != nil {
+		if errors.Is(err, user.ErrUniqueEmail) {
+			return v1Web.NewRequestError(err, http.StatusConflict)
+		}
+		return fmt.Errorf("user[%+v]: %w", &usr, err)
+	}
+
+	return web.Respond(ctx, w, usr, http.StatusCreated)
+}
+
+// Create adds a new user to the system.
+func (h Handlers) Create(ctx context.Context, w http.ResponseWriter, r *http.Request) error {
+	v, err := fctx.GetValues(ctx)
+	if err != nil {
+		return web.NewShutdownError("web value missing from context")
+	}
+
+	var nu user.NewUser
+	if err := web.Decode(r, &nu); err != nil {
+		return fmt.Errorf("unable to decode payload: %w", err)
+	}
+
+	usr, err := h.User.Create(ctx, nu, v.Now)
+	if err != nil {
+		if errors.Is(err, user.ErrUniqueEmail) {
+			return v1Web.NewRequestError(err, http.StatusConflict)
+		}
+		return fmt.Errorf("user[%+v]: %w", &usr, err)
+	}
+
+	return web.Respond(ctx, w, usr, http.StatusCreated)
+}
