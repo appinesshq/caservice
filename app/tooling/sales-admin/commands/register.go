@@ -13,7 +13,10 @@ import (
 
 // Register registers a new user in the system.
 func Register(host, name, email, password string) error {
-
+	if name == "" || email == "" || password == "" {
+		fmt.Println("help: register <name> <email> <password>")
+		return ErrHelp
+	}
 	nu := user.NewUser{
 		Name:            name,
 		Email:           email,

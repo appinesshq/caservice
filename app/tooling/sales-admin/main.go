@@ -44,7 +44,8 @@ func run(log *zap.SugaredLogger) error {
 		conf.Version
 		Args conf.Args
 		Web  struct {
-			APIHost string `conf:"default:http://0.0.0.0:3000"`
+			APIHost       string `conf:"default:http://0.0.0.0:3000"`
+			AuthTokenFile string `conf:"default:/tmp/.service/token"`
 		}
 	}{
 		Version: conf.Version{
@@ -72,13 +73,17 @@ func run(log *zap.SugaredLogger) error {
 	// =========================================================================
 	// Commands
 
-	return processCommands(cfg.Args, cfg.Web.APIHost, log)
+	return processCommands(cfg.Args, cfg.Web.APIHost, cfg.Web.AuthTokenFile, log)
 }
 
 // processCommands handles the execution of the commands specified on
 // the command line.
-func processCommands(args conf.Args, host string, log *zap.SugaredLogger) error {
+func processCommands(args conf.Args, host string, tokenfile string, log *zap.SugaredLogger) error {
 	switch args.Num(0) {
+	case "authenticate":
+		if err := commands.Authenticate(host, args.Num(1), args.Num(2), tokenfile); err != nil {
+			return fmt.Errorf("authenticate user: %w", err)
+		}
 	case "genkey":
 		if err := commands.GenKey(); err != nil {
 			return fmt.Errorf("key generation: %w", err)
@@ -88,6 +93,7 @@ func processCommands(args conf.Args, host string, log *zap.SugaredLogger) error 
 			return fmt.Errorf("register user: %w", err)
 		}
 	default:
+		fmt.Printf("authenticate: authenticate a user and store the token in %q\n", tokenfile)
 		fmt.Println("genkey: generate a set of private/public key files")
 		fmt.Println("register: register a new user")
 		fmt.Println("provide a command to get more help.")
