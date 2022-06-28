@@ -55,7 +55,8 @@ func (m *Store) Create(ctx context.Context, u user.User) error {
 	return nil
 }
 
-func (m *Store) Query(ctx context.Context) ([]user.User, error) {
+func (m *Store) Query(ctx context.Context, pageNumber int, rowsPerPage int) ([]user.User, error) {
+	// TODO: Implement pagination.
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 

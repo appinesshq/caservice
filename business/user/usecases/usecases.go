@@ -77,7 +77,7 @@ func (uc UserUseCases) Create(ctx context.Context, n NewUser, now time.Time) (us
 // Unlike Create, Register requires no admin priviliges. It is meant
 // to register the first admin of the system and user signups.
 func (uc UserUseCases) Register(ctx context.Context, n NewUser, now time.Time) (user.User, error) {
-	users, err := uc.Repo.Query(ctx)
+	users, err := uc.Repo.Query(ctx, 1, 1)
 	if err != nil {
 		return user.User{}, err
 	}
@@ -100,7 +100,7 @@ func (uc UserUseCases) Register(ctx context.Context, n NewUser, now time.Time) (
 }
 
 // Query retrieves all users from the repository,
-func (uc UserUseCases) Query(ctx context.Context) ([]user.User, error) {
+func (uc UserUseCases) Query(ctx context.Context, pageNumber int, rowsPerPage int) ([]user.User, error) {
 	s, err := user.GetSession(ctx)
 	if err != nil {
 		return []user.User{}, err
@@ -111,7 +111,7 @@ func (uc UserUseCases) Query(ctx context.Context) ([]user.User, error) {
 		return []user.User{}, ErrUnauthorized
 	}
 
-	return uc.Repo.Query(ctx)
+	return uc.Repo.Query(ctx, pageNumber, rowsPerPage)
 }
 
 // QueryByID retrieves a single user from the repository by its id.

@@ -10,7 +10,7 @@ import (
 // UserStorage is an interface to be implemented by user storages.
 type UserStorage interface {
 	Create(context.Context, user.User) error
-	Query(context.Context) ([]user.User, error)
+	Query(context.Context, int, int) ([]user.User, error)
 	QueryByID(context.Context, string) (user.User, error)
 	QueryByEmail(context.Context, string) (user.User, error)
 	Update(context.Context, user.User) error
@@ -33,8 +33,8 @@ func (r UserRepository) Create(ctx context.Context, u user.User) error {
 	return r.Storage.Create(ctx, u)
 }
 
-func (r UserRepository) Query(ctx context.Context) ([]user.User, error) {
-	return r.Storage.Query(ctx)
+func (r UserRepository) Query(ctx context.Context, pageNumber int, rowsPerPage int) ([]user.User, error) {
+	return r.Storage.Query(ctx, pageNumber, rowsPerPage)
 }
 
 func (r UserRepository) QueryByID(ctx context.Context, id string) (user.User, error) {

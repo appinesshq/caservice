@@ -16,10 +16,11 @@ import (
 	"github.com/appinesshq/caservice/app/services/sales-api/web/auth"
 	"github.com/appinesshq/caservice/data"
 	"github.com/appinesshq/caservice/data/user"
-	"github.com/appinesshq/caservice/data/user/mem"
+	"github.com/appinesshq/caservice/data/user/pg"
 	"github.com/appinesshq/caservice/foundation/keystore"
 	"github.com/appinesshq/caservice/foundation/logger"
 	"github.com/ardanlabs/conf/v3"
+	"github.com/ardanlabs/service/business/sys/database"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -78,15 +79,15 @@ func run(log *zap.SugaredLogger) error {
 			ActiveKID           string        `conf:"default:54bb2165-71e1-41a6-af3e-7da4a0e1e2c1"`
 			UserSessionDuration time.Duration `conf:"default:1h"`
 		}
-		// DB struct {
-		// 	User         string `conf:"default:postgres"`
-		// 	Password     string `conf:"default:postgres,mask"`
-		// 	Host         string `conf:"default:localhost"`
-		// 	Name         string `conf:"default:postgres"`
-		// 	MaxIdleConns int    `conf:"default:0"`
-		// 	MaxOpenConns int    `conf:"default:0"`
-		// 	DisableTLS   bool   `conf:"default:true"`
-		// }
+		DB struct {
+			User         string `conf:"default:postgres"`
+			Password     string `conf:"default:postgres,mask"`
+			Host         string `conf:"default:localhost"`
+			Name         string `conf:"default:postgres"`
+			MaxIdleConns int    `conf:"default:0"`
+			MaxOpenConns int    `conf:"default:0"`
+			DisableTLS   bool   `conf:"default:true"`
+		}
 		// Zipkin struct {
 		// 	ReporterURI string  `conf:"default:http://localhost:9411/api/v2/spans"`
 		// 	ServiceName string  `conf:"default:sales-api"`
@@ -143,8 +144,27 @@ func run(log *zap.SugaredLogger) error {
 	// =========================================================================
 	// Initialize storage
 
-	log.Infow("startup", "status", "initializing data sources")
-	repos := data.Repositories{UserRepo: user.UserRepository{Storage: mem.New()}}
+	// Create connectivity to the database.
+	log.Infow("startup", "status", "initializing storage", "host", cfg.DB.Host)
+
+	db, err := database.Open(database.Config{
+		User:         cfg.DB.User,
+		Password:     cfg.DB.Password,
+		Host:         cfg.DB.Host,
+		Name:         cfg.DB.Name,
+		MaxIdleConns: cfg.DB.MaxIdleConns,
+		MaxOpenConns: cfg.DB.MaxOpenConns,
+		DisableTLS:   cfg.DB.DisableTLS,
+	})
+	if err != nil {
+		return fmt.Errorf("connecting to db: %w", err)
+	}
+	defer func() {
+		log.Infow("shutdown", "status", "stopping database support", "host", cfg.DB.Host)
+		db.Close()
+	}()
+
+	repos := data.Repositories{UserRepo: user.UserRepository{Storage: pg.NewStore(log, db)}}
 
 	// =========================================================================
 	// TODO: Initialize Tracing
