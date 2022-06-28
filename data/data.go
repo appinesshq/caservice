@@ -1,8 +1,8 @@
 // Package data provides functionality for data interaction.
 package data
 
-import "github.com/appinesshq/caservice/data/user"
+import user "github.com/appinesshq/caservice/business/user/usecases"
 
-type DataSources struct {
-	UserRepo user.UserStorage
+type Repositories struct {
+	UserRepo user.UserRepository
 }

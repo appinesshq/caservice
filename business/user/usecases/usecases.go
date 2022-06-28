@@ -34,7 +34,7 @@ func New(log *zap.SugaredLogger, r UserRepository, s time.Duration) UserUseCases
 
 // Authenticate returns a Session after succesfully authenticating a user by email and password.
 func (uc UserUseCases) Authenticate(ctx context.Context, email, password string, now time.Time) (user.Session, error) {
-	u, err := uc.Repo.QueryByEmail(email)
+	u, err := uc.Repo.QueryByEmail(ctx, email)
 	if err != nil {
 		return user.Session{}, ErrAuthenticationFailed
 	}
@@ -63,7 +63,7 @@ func (uc UserUseCases) Create(ctx context.Context, n NewUser, now time.Time) (us
 		return user.User{}, err
 	}
 
-	if err := uc.Repo.Create(u); err != nil {
+	if err := uc.Repo.Create(ctx, u); err != nil {
 		return user.User{}, err
 	}
 
@@ -77,7 +77,7 @@ func (uc UserUseCases) Create(ctx context.Context, n NewUser, now time.Time) (us
 // Unlike Create, Register requires no admin priviliges. It is meant
 // to register the first admin of the system and user signups.
 func (uc UserUseCases) Register(ctx context.Context, n NewUser, now time.Time) (user.User, error) {
-	users, err := uc.Repo.Query()
+	users, err := uc.Repo.Query(ctx)
 	if err != nil {
 		return user.User{}, err
 	}
@@ -92,7 +92,7 @@ func (uc UserUseCases) Register(ctx context.Context, n NewUser, now time.Time) (
 		return user.User{}, err
 	}
 
-	if err := uc.Repo.Create(u); err != nil {
+	if err := uc.Repo.Create(ctx, u); err != nil {
 		return user.User{}, err
 	}
 
@@ -111,7 +111,7 @@ func (uc UserUseCases) Query(ctx context.Context) ([]user.User, error) {
 		return []user.User{}, ErrUnauthorized
 	}
 
-	return uc.Repo.Query()
+	return uc.Repo.Query(ctx)
 }
 
 // QueryByID retrieves a single user from the repository by its id.
@@ -126,7 +126,7 @@ func (uc UserUseCases) QueryByID(ctx context.Context, id string) (user.User, err
 		return user.User{}, ErrUnauthorized
 	}
 
-	return uc.Repo.QueryByID(id)
+	return uc.Repo.QueryByID(ctx, id)
 }
 
 // QueryByEmail retrieves a single user from the repository by its email address.
@@ -141,7 +141,7 @@ func (uc UserUseCases) QueryByEmail(ctx context.Context, email string) (user.Use
 		return user.User{}, ErrUnauthorized
 	}
 
-	return uc.Repo.QueryByEmail(email)
+	return uc.Repo.QueryByEmail(ctx, email)
 }
 
 // Update updates the provided user at the repository.
@@ -156,7 +156,7 @@ func (uc UserUseCases) Update(ctx context.Context, u user.User) error {
 		return ErrUnauthorized
 	}
 
-	return uc.Repo.Update(u)
+	return uc.Repo.Update(ctx, u)
 }
 
 // Delete removes a user from the repository by its id.
@@ -171,5 +171,5 @@ func (uc UserUseCases) Delete(ctx context.Context, id string) error {
 		return ErrUnauthorized
 	}
 
-	return uc.Repo.Delete(id)
+	return uc.Repo.Delete(ctx, id)
 }

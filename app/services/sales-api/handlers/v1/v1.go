@@ -20,7 +20,7 @@ import (
 type Config struct {
 	Log                 *zap.SugaredLogger
 	Auth                *auth.Auth
-	DataSources         *data.DataSources
+	Repositories        *data.Repositories
 	UserSessionDuration time.Duration
 }
 
@@ -33,7 +33,7 @@ func Routes(app *web.App, cfg Config) {
 
 	// Register user management and authentication endpoints.
 	ugh := usergrp.Handlers{
-		User: user.New(cfg.Log, cfg.DataSources.UserRepo, cfg.UserSessionDuration),
+		User: user.New(cfg.Log, cfg.Repositories.UserRepo, cfg.UserSessionDuration),
 		Auth: cfg.Auth,
 	}
 	app.Handle(http.MethodGet, version, "/users/token", ugh.Token)

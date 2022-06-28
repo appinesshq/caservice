@@ -1,7 +1,8 @@
-// Package mem provides memory storage functionality.
+// Package mem provides memory storage functionality for users.
 package mem
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -9,17 +10,17 @@ import (
 	"github.com/appinesshq/caservice/business/user/usecases"
 )
 
-type MemStorage struct {
+type Store struct {
 	mu      sync.RWMutex
 	users   map[string]user.User
 	indexes map[string]string
 }
 
-func New() *MemStorage {
-	return &MemStorage{users: make(map[string]user.User), indexes: make(map[string]string)}
+func New() *Store {
+	return &Store{users: make(map[string]user.User), indexes: make(map[string]string)}
 }
 
-func (m *MemStorage) hasID(id string) bool {
+func (m *Store) hasID(id string) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -27,7 +28,7 @@ func (m *MemStorage) hasID(id string) bool {
 	return exists
 }
 
-func (m *MemStorage) hasEmail(email string) bool {
+func (m *Store) hasEmail(email string) bool {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -35,7 +36,7 @@ func (m *MemStorage) hasEmail(email string) bool {
 	return exists
 }
 
-func (m *MemStorage) Create(u user.User) error {
+func (m *Store) Create(ctx context.Context, u user.User) error {
 	// Return an error if the ID or Email already exist.
 	if m.hasID(u.ID) {
 		return usecases.ErrUniqueID
@@ -54,7 +55,7 @@ func (m *MemStorage) Create(u user.User) error {
 	return nil
 }
 
-func (m *MemStorage) Query() ([]user.User, error) {
+func (m *Store) Query(ctx context.Context) ([]user.User, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -66,7 +67,7 @@ func (m *MemStorage) Query() ([]user.User, error) {
 	return users, nil
 }
 
-func (m *MemStorage) QueryByID(id string) (user.User, error) {
+func (m *Store) QueryByID(ctx context.Context, id string) (user.User, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -78,7 +79,7 @@ func (m *MemStorage) QueryByID(id string) (user.User, error) {
 	return u, nil
 }
 
-func (m *MemStorage) QueryByEmail(email string) (user.User, error) {
+func (m *Store) QueryByEmail(ctx context.Context, email string) (user.User, error) {
 	m.mu.RLock()
 	defer m.mu.RUnlock()
 
@@ -105,8 +106,8 @@ func (m *MemStorage) QueryByEmail(email string) (user.User, error) {
 	return u, nil
 
 }
-func (m *MemStorage) Update(u user.User) error {
-	current, err := m.QueryByID(u.ID)
+func (m *Store) Update(ctx context.Context, u user.User) error {
+	current, err := m.QueryByID(ctx, u.ID)
 	if err != nil {
 		return err
 	}
@@ -122,8 +123,8 @@ func (m *MemStorage) Update(u user.User) error {
 	return nil
 }
 
-func (m *MemStorage) Delete(id string) error {
-	current, err := m.QueryByID(id)
+func (m *Store) Delete(ctx context.Context, id string) error {
+	current, err := m.QueryByID(ctx, id)
 	if err != nil && errors.Is(err, usecases.ErrNotFound) {
 		// Delete should return a nil error in case of not found.
 		return nil

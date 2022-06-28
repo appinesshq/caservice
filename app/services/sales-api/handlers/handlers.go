@@ -36,7 +36,7 @@ type APIMuxConfig struct {
 	Shutdown            chan os.Signal
 	Log                 *zap.SugaredLogger
 	Auth                *auth.Auth
-	DataSources         *data.DataSources
+	Repositories        *data.Repositories
 	UserSessionDuration time.Duration
 }
 
@@ -84,7 +84,7 @@ func APIMux(cfg APIMuxConfig, options ...func(opts *Options)) http.Handler {
 	v1.Routes(app, v1.Config{
 		Log:                 cfg.Log,
 		Auth:                cfg.Auth,
-		DataSources:         cfg.DataSources,
+		Repositories:        cfg.Repositories,
 		UserSessionDuration: cfg.UserSessionDuration,
 	})
 
