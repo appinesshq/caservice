@@ -15,12 +15,18 @@ import (
 	"github.com/appinesshq/caservice/app/services/sales-api/handlers"
 	"github.com/appinesshq/caservice/app/services/sales-api/web/auth"
 	"github.com/appinesshq/caservice/data"
+	database "github.com/appinesshq/caservice/data/core/pg"
 	"github.com/appinesshq/caservice/data/user"
 	"github.com/appinesshq/caservice/data/user/pg"
 	"github.com/appinesshq/caservice/foundation/keystore"
 	"github.com/appinesshq/caservice/foundation/logger"
 	"github.com/ardanlabs/conf/v3"
-	"github.com/ardanlabs/service/business/sys/database"
+	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/zipkin"
+	"go.opentelemetry.io/otel/sdk/resource"
+	"go.opentelemetry.io/otel/sdk/trace"
+	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 	"go.uber.org/automaxprocs/maxprocs"
 	"go.uber.org/zap"
 )
@@ -88,11 +94,11 @@ func run(log *zap.SugaredLogger) error {
 			MaxOpenConns int    `conf:"default:0"`
 			DisableTLS   bool   `conf:"default:true"`
 		}
-		// Zipkin struct {
-		// 	ReporterURI string  `conf:"default:http://localhost:9411/api/v2/spans"`
-		// 	ServiceName string  `conf:"default:sales-api"`
-		// 	Probability float64 `conf:"default:0.05"`
-		// }
+		Zipkin struct {
+			ReporterURI string  `conf:"default:http://localhost:9411/api/v2/spans"`
+			ServiceName string  `conf:"default:sales-api"`
+			Probability float64 `conf:"default:0.05"`
+		}
 	}{
 		Version: conf.Version{
 			Build: build,
@@ -167,10 +173,38 @@ func run(log *zap.SugaredLogger) error {
 	repos := data.Repositories{UserRepo: user.UserRepository{Storage: pg.NewStore(log, db)}}
 
 	// =========================================================================
-	// TODO: Initialize Tracing
+	// Initialize Tracing
+
+	log.Infow("startup", "status", "initializing OT/Zipkin tracing support")
+
+	traceProvider, err := startTracing(
+		cfg.Zipkin.ServiceName,
+		cfg.Zipkin.ReporterURI,
+		cfg.Zipkin.Probability,
+	)
+	if err != nil {
+		return fmt.Errorf("starting tracing: %w", err)
+	}
+	defer traceProvider.Shutdown(context.Background())
 
 	// =========================================================================
-	// TODO: Initialize Debug Endpoints
+	// Initialize Debug Endpoints
+
+	log.Infow("startup", "status", "debug v1 router started", "host", cfg.Web.DebugHost)
+
+	// The Debug function returns a mux to listen and serve on for all the debug
+	// related endpoints. This includes the standard library endpoints.
+
+	// Construct the mux for the debug calls.
+	debugMux := handlers.DebugMux(build, log, db)
+
+	// Start the service listening for debug requests.
+	// Not concerned with shutting this down with load shedding.
+	go func() {
+		if err := http.ListenAndServe(cfg.Web.DebugHost, debugMux); err != nil {
+			log.Errorw("shutdown", "status", "debug v1 router closed", "host", cfg.Web.DebugHost, "ERROR", err)
+		}
+	}()
 
 	// =========================================================================
 	// Start API Service
@@ -235,4 +269,41 @@ func run(log *zap.SugaredLogger) error {
 	}
 
 	return nil
+}
+
+// =============================================================================
+// startTracing configure open telemetry to be used with zipkin.
+func startTracing(serviceName string, reporterURI string, probability float64) (*trace.TracerProvider, error) {
+
+	// WARNING: The current settings are using defaults which may not be
+	// compatible with your project. Please review the documentation for
+	// opentelemetry.
+
+	exporter, err := zipkin.New(
+		reporterURI,
+		// zipkin.WithLogger(zap.NewStdLog(log)),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("creating new exporter: %w", err)
+	}
+
+	traceProvider := trace.NewTracerProvider(
+		trace.WithSampler(trace.TraceIDRatioBased(probability)),
+		trace.WithBatcher(exporter,
+			trace.WithMaxExportBatchSize(trace.DefaultMaxExportBatchSize),
+			trace.WithBatchTimeout(trace.DefaultScheduleDelay*time.Millisecond),
+			trace.WithMaxExportBatchSize(trace.DefaultMaxExportBatchSize),
+		),
+		trace.WithResource(
+			resource.NewWithAttributes(
+				semconv.SchemaURL,
+				semconv.ServiceNameKey.String(serviceName),
+				attribute.String("exporter", "zipkin"),
+			),
+		),
+	)
+
+	// I can only get this working properly using the singleton :(
+	otel.SetTracerProvider(traceProvider)
+	return traceProvider, nil
 }

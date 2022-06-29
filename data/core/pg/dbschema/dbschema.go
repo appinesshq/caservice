@@ -6,8 +6,8 @@ import (
 	_ "embed" // Calls init function.
 	"fmt"
 
+	database "github.com/appinesshq/caservice/data/core/pg"
 	"github.com/ardanlabs/darwin"
-	"github.com/ardanlabs/service/business/sys/database"
 	"github.com/jmoiron/sqlx"
 )
 

@@ -19,7 +19,7 @@ type User struct {
 	ID           string    `validate:"required,uuid"`
 	Name         string    `validate:"required"`
 	Email        string    `validate:"required,email"`
-	PasswordHash string    `validate:"required,notEmptyPassword"`
+	PasswordHash []byte    `validate:"required,notEmptyPassword"`
 	Roles        []string  `validate:"required,min=1"`
 	DateCreated  time.Time `validate:"required"`
 	DateUpdated  time.Time `validate:"required"`
@@ -35,7 +35,7 @@ func New(id, name, email, password string, roles []string, now time.Time) (User,
 		ID:           id,
 		Name:         name,
 		Email:        email,
-		PasswordHash: string(b),
+		PasswordHash: b,
 		Roles:        roles,
 		DateCreated:  now,
 		DateUpdated:  now,

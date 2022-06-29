@@ -71,7 +71,7 @@ var DefaultValidationProvider = NewStandardValidationProvider()
 
 // isValidUUID returns true if the field does NOT contain a hashed empty password.
 func isNotEmptyPassword(f validator.FieldLevel) bool {
-	if err := bcrypt.CompareHashAndPassword([]byte(f.Field().String()), []byte("")); err == nil {
+	if err := bcrypt.CompareHashAndPassword(f.Field().Bytes(), []byte("")); err == nil {
 		return false
 	}
 

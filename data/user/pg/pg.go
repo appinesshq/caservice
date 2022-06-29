@@ -181,5 +181,7 @@ func (s Store) QueryByEmail(ctx context.Context, email string) (user.User, error
 		return user.User{}, fmt.Errorf("selecting email[%q]: %w", email, err)
 	}
 
-	return toEntity(usr), nil
+	u := toEntity(usr)
+
+	return u, nil
 }

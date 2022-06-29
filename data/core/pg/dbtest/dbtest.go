@@ -11,12 +11,13 @@ import (
 	"testing"
 	"time"
 
-	dbUser "github.com/ardanlabs/service/business/core/user/db"
-	"github.com/ardanlabs/service/business/data/dbschema"
-	"github.com/ardanlabs/service/business/sys/database"
-	"github.com/ardanlabs/service/business/web/auth"
-	"github.com/ardanlabs/service/foundation/docker"
-	"github.com/ardanlabs/service/foundation/keystore"
+	// TODO: Refactor. Should not require auth on this level.
+	"github.com/appinesshq/caservice/app/services/sales-api/web/auth"
+	database "github.com/appinesshq/caservice/data/core/pg"
+	"github.com/appinesshq/caservice/data/core/pg/dbschema"
+	dbUser "github.com/appinesshq/caservice/data/user/pg"
+	"github.com/appinesshq/caservice/foundation/docker"
+	"github.com/appinesshq/caservice/foundation/keystore"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/jmoiron/sqlx"
 	"go.uber.org/zap"
@@ -87,7 +88,7 @@ func NewUnit(t *testing.T, c *docker.Container, dbName string) (*zap.SugaredLogg
 		t.Fatalf("Opening database connection: %v", err)
 	}
 
-	t.Log("Migrate and seed database ...")
+	t.Log("Migrate and seed database...")
 
 	if err := dbschema.Migrate(ctx, db); err != nil {
 		docker.DumpContainerLogs(t, c.ID)
@@ -165,7 +166,7 @@ func NewIntegration(t *testing.T, c *docker.Container, dbName string) *Test {
 
 // Token generates an authenticated token for a user.
 func (test *Test) Token(email, pass string) string {
-	test.t.Log("Generating token for test ...")
+	test.t.Log("Generating token for test...")
 
 	store := dbUser.NewStore(test.Log, test.DB)
 	dbUsr, err := store.QueryByEmail(context.Background(), email)
